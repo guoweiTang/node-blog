@@ -4,14 +4,27 @@
   "description": "a node application",
   "main": "index.js",
   "scripts": {
-  	"start": "supervisor server/app.js",
+    "start": "supervisor server/app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "ice",
   "license": "ISC",
   "dependencies": {
     "body-parser": "^1.17.1",
+    "cookie-session": "^2.0.0-beta.1",
     "ejs": "^2.5.6",
     "express": "^4.15.2"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/guoweiTang/node-blog.git"
+  },
+  "keywords": [
+    "node",
+    "blog"
+  ],
+  "bugs": {
+    "url": "https://github.com/guoweiTang/node-blog/issues"
+  },
+  "homepage": "https://github.com/guoweiTang/node-blog#readme"
 }

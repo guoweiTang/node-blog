@@ -6,19 +6,29 @@
  */
 let express = require('express'),
 	bodyParser = require('body-parser'),
-	controller = require('./controller');
+	cookieSession = require('cookie-session'),
+	fs = require('fs');
 
 let app = express();
 
 app.set('views', process.cwd() + '/webapp');
 app.set('view engine', 'ejs');
 
+app.set('trust proxy', 1) // trust first proxy 
+ 
+app.use(cookieSession({
+  name: 'session',
+  keys: ['key1', 'key2'],
+  maxAge: 24 * 60 * 60 * 1000
+}))
+
 //扩展
 app.use(bodyParser.urlencoded({extended: false}), bodyParser.raw())
 app.use(express.static('webapp'))
 
-//监听url
-// app.use(controller());
+
+
+
 
 //注册
 app.route('/register.html')
@@ -32,15 +42,31 @@ app.route('/register.html')
 //登录
 app.route('/login.html')
 .get(function(req, res, next){
-	res.render('passport/login');
+	res.render('passport/login', {
+		isOnLine: false
+	});
 })
 .post(function(req, res, next){
 	res.send('login ok!');
 })
 
+app.get('/logout', function(req, res) {
+	
+})
+
 //首页
 app.get(['/', '/index.html'], function(req, res, next){
-	res.render('passport/login');
+	let rs = fs.createReadStream(__dirname + '/data/articles.json'),
+		fileData = '';
+	rs.on('data', function(data) {
+		fileData += data;
+	})
+	rs.on('end', function() {
+		let jsonFileData = JSON.parse(fileData);
+		res.render('index/index', {
+			result: jsonFileData.result
+		});
+	})
 })
 
 

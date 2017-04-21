@@ -1,0 +1,16 @@
+<header class="page_header">
+	<div class="login_register">
+		<% if(typeof isOnLine !== 'undefined' && isOnLine) { %>
+		<a href="/"><%= userSession.name %></a>
+		<% }else{ %>
+		<a href="/login.html">登录</a>
+		<a href="/register.html">注册</a>
+		<% } %>
+	</div>
+	<nav>
+		<ul class="clearfix">
+			<li><a href="/index.html">首页</a></li>
+			<li><a href="/">个人博客</a></li>
+		</ul>
+	</nav>
+</header>

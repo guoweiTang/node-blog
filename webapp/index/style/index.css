@@ -1,0 +1,57 @@
+@charset "UTF-8";
+/**
+ * 
+ * @authors ice
+ * @date    2017-02-08 11:38:12
+ */
+
+.blog_panel{
+    width: 100%;
+    box-sizing: border-box;
+    padding: 20px 12px;
+    background-color: #f9f9f9;
+    border-bottom: 1px solid #d9d9d9;
+}
+.blog_panel dt{
+    width: 96px;
+    float: left;
+    margin-right: 20px;
+    text-align: center;
+}
+.blog_panel dt img{
+    display: block;
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+}
+.blog_panel .name{
+    display: block;
+    width: 100%;
+    font-size: 16px;
+    margin-top: 5px;
+}
+h3{
+    margin: 0 0 6px;
+    font-size: 18px;
+    font-weight: bold;
+}
+.blog_panel p{
+    line-height: 24px;
+}
+.blog_data {
+    margin-top: 22px;
+    text-align: right;
+}
+.content > section{
+    margin-top: 30px;
+}
+.content > section:first-child{
+    margin-top: 0;
+}
+
+
+
+
+
+
+
