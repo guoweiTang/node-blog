@@ -1,7 +1,8 @@
 <header class="page_header">
 	<div class="login_register">
 		<% if(typeof isOnLine !== 'undefined' && isOnLine) { %>
-		<a href="/"><%= userSession.name %></a>
+		<a href="/"><%= userProfile.name %></a>
+		<a href="/logout">退出</a>
 		<% }else{ %>
 		<a href="/login.html">登录</a>
 		<a href="/register.html">注册</a>
