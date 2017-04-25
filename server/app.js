@@ -7,25 +7,41 @@
 let express = require('express');
 let colors = require('colors');
 let bodyParser = require('body-parser');
+let multer  = require('multer');
 let cookieParser = require('cookie-parser');
 let cookieSession = require('cookie-session');
 let fs = require('fs');
 
 let sessionMap = new Map();
-
 let app = express();
+let upload = multer({
+	dest: 'upload-sources/i'
+});
 
 app.set('views', process.cwd() + '/webapp');
 app.set('view engine', 'ejs');
 
-//扩展
-app.use(cookieParser())
-app.use(bodyParser.urlencoded({extended: false}), bodyParser.raw())
-app.use(express.static('webapp'))
+//cookie && body
+app.use(cookieParser());
+app.use(bodyParser.urlencoded({extended: false}));
+//设置静态目录
+app.use(express.static('webapp'));
+app.use(express.static('upload-sources'));
 
+//注入全局变量：isOnLine、userProfile
+app.use(function(req, res, next){
+	let session = req.cookies.session;
+	let isOnLine = sessionMap.has(session);
 
+	//是否登录标识
+	app.locals.isOnLine = isOnLine;
 
-
+	//登录用户信息
+	if(isOnLine){
+		app.locals.userProfile = sessionMap.get(session);
+	}
+	next();
+})
 
 //注册
 app.route('/register.html')
@@ -35,13 +51,10 @@ app.route('/register.html')
 .post(function(req, res, next){
 	res.set('Content-Type', 'text/html');
 	let body = req.body;
-	findWithFile(res, 'user.json');
-	res.on('readEnd', function(fileData, url) {
-		fileData.result = fileData.result || [];
-		let ws = fs.createWriteStream(url);
-
-		for(let user of fileData.result){
-			//该用户名已注册
+	findWithFile('user.json', function(jsonData, fullUrl) {
+		let result = jsonData.result;
+		//检测该用户名是否已注册
+		for(let user of result){
 			if(user.name === body.user){
 				res.end('The nickname has registered, please change other nickname <a href="javascript:history.go(-1)">register again</a> or <a href="/login.html">quick login</a>');
 				return;
@@ -49,34 +62,38 @@ app.route('/register.html')
 		}
 
 		let userDetail = {
+			id: factoryId(),
 			name: body.user,
 			password: body.password,
 			picture: '',
 		};
 		//用户列表添加数据
-		fileData.result.push(userDetail);
-		fileData.totalCount = (fileData.totalCount || 0) + 1;
-		ws.end(JSON.stringify(fileData));
+		result.push(userDetail);
+		jsonData.totalCount ++;
 
+		let ws = fs.createWriteStream(fullUrl);
+		ws.end(JSON.stringify(jsonData));
 		ws.on('close', function(){
 			addCookieSession(res, userDetail);
 		})
-	})
+	});
 })
 
 //登录
 app.route('/login.html')
 .get(function(req, res, next){
-	res.render('passport/login', {
-		isOnLine: false
-	});
+	//已登录
+	if(app.locals.isOnLine){
+		res.redirect('/index.html');
+	}else{
+		res.render('passport/login');
+	}
 })
 .post(function(req, res, next){
 	res.set('Content-Type', 'text/html');
 	let body = req.body;
-	findWithFile(res, 'user.json');
-	res.on('readEnd', function(fileData, url) {
-		let userList = fileData.result || [];
+	findWithFile('user.json', function(jsonData, fullUrl) {
+		let userList = jsonData.result;
 		//登录是否成功标识
 		let loginSign = false;
 		let userDetail = null;
@@ -96,39 +113,66 @@ app.route('/login.html')
 	})
 })
 
+//登出
 app.get('/logout', function(req, res, next) {
-	res.clearCookie('session');
-	res.redirect('/index.html');
+	deleteCookieSession(res);
 })
 
 //首页
 app.all(['/', '/index.html'], function(req, res, next){
-	let session = req.cookies.session;
-	let data = {};
-	//已登录，不考虑过期
-	if(session){
-		data.isOnLine = true;
-		data.userProfile = sessionMap.get(session);
-	}
 	//查询文章列表
-	findWithFile(res, 'articles.json');
-	res.on('readEnd', function(fileData) {
-		data.result = fileData.result || [];
-		res.render('index/index', data);
-	})
+	findWithFile('articles.json', function(jsonData, fullUrl) {
+		let result = jsonData.result;
+		for(let article of result){
+			if(!article.author.picture){
+				article.author.picture = '/i/default-head.jpg';
+			}
+		}
+		res.render('index/index', {
+			result: result
+		});
+	});
 });
 
 
+//个人博客
+app.all('/profile.html', function(req, res, next){
+	//已登录
+	if(app.locals.isOnLine){
+		findWithFile('articles.json', function(jsonData, fullUrl) {
+			res.render('profile/profile', {
+				result: jsonData.result
+			});
+		});
+	}else{
+		res.redirect('/login.html');
+	}
+});
+
+//设置
+app.route('/settings.html')
+.get(function(req, res, next){
+	//已登录
+	if(app.locals.isOnLine){
+		res.render('profile/settings');
+	}else{
+		res.redirect('/login.html');
+	}
+})
+.post(upload.single('headPic'), function(req, res, next){
+	// console.log(req.file)	
+	res.end('ok')
+})
+
 
 /**
- * [findWithFile 文件中查询json数据，并触发目标对象事件]
- * @param  {[type]} res      [目标对象]
+ * [findWithFile 文件中查询json数据]
  * @param  {[type]} fileName [文件名，含扩展名]
  * @return {[type]}          [description]
  */
-function findWithFile(res, fileName){
-	let url = __dirname + '/data/' + fileName;
-	let rs = fs.createReadStream(url),
+function findWithFile(fileName, callback){
+	let fullUrl = __dirname + '/data/' + fileName;
+	let rs = fs.createReadStream(fullUrl),
 		fileData = '';
 	rs.on('data', function(data) {
 		fileData += data;
@@ -136,17 +180,33 @@ function findWithFile(res, fileName){
 	rs.on('end', function() {
 		fileData = fileData || '{}';
 		let jsonFileData = JSON.parse(fileData);
-		res.emit('readEnd', jsonFileData, url);
+		jsonFileData.result = jsonFileData.result || [];
+		jsonFileData.totalCount = jsonFileData.totalCount || 0;
+		typeof callback === 'function' && callback(jsonFileData, fullUrl);
 	})
 }
 
 function addCookieSession(res, user){
-	let sessionValue = (new Date()).getTime() + '';
+	let sessionValue = factoryId();
+	user.picture = '/i/default-head.jpg';
+
 	sessionMap.set(sessionValue, user);
 	res.cookie('session', sessionValue);
 	res.redirect('/index.html');
 }
 
+function deleteCookieSession(res){
+	res.clearCookie('session');
+	res.redirect('/index.html');
+}
+
+/**
+ * [factoryId 生成虚拟id的工厂]
+ * @return {[type]} [description]
+ */
+function factoryId(){
+	return '' + parseInt(Math.random()*Math.pow(10, 4)) + parseInt(Math.random()*Math.pow(10, 4))
+}
 
 
 
@@ -154,7 +214,6 @@ function addCookieSession(res, user){
 
 //错误处理
 app.use(function(err, req, res, next){
-	// res.end(err.message);
 	next(err);
 })
 

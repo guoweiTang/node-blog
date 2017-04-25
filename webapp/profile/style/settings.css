@@ -5,18 +5,34 @@
  * @date    2017-02-08 11:38:12
  */
 .container{
-	text-align: center;
-}
-p{
-    margin-top: 14px;
-}
-p a{
-    text-decoration: underline;
-    color: #00b38a;
+    text-align: center;
 }
 form{
     width: 400px;
+    margin: 20px auto 0;
+}
+.head_pic{
     margin: 0 auto;
+    position: relative;
+    display: block;
+    width: 96px;
+    height: 96px;
+}
+.head_pic img{
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 96px;
+    height: 96px;
+}
+.head_pic [type="file"]{
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 1;
+    width: 96px;
+    height: 96px;
+    opacity: 0.01;
 }
 input[type="text"],
 input[type="password"]{

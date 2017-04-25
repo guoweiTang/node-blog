@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<title>设置</title>
+<link rel="stylesheet" href="../common/style/base.css">
+<link rel="stylesheet" href="../profile/style/settings.css">
+</head>
+<body>
+<div class="container">
+	<%- include('../common/widgets/header') -%>
+	<div class="content">
+		<form class="uploadFile" action="/settings.html" method="POST" enctype="multipart/form-data">
+			<label class="head_pic"><img src="<%= userProfile.picture %>" alt="" width="96" height="96"><input type="file" name="headPic"></label>
+		</form>
+		<form action="/settings.html" method="POST">
+			<input type="text" name="user" value="<%= userProfile.name %>">
+			<input type="submit" value="保存">
+		</form>
+	</div>
+</div>
+<script>
+	let fileInput = document.querySelector('input[type="file"]');
+	let fileForm = document.querySelector('.uploadFile');
+	fileInput.addEventListener('change', function(event) {
+		fileForm.submit()
+	})
+</script>
+</body>
+</html>

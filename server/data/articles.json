@@ -1,9 +1,11 @@
 {
     "result":[
         {
+            "id": "1001",
             "author": {
+                "id": "1",
                 "name": "ice",
-                "picture": "/a.jpg"
+                "picture": ""
             },
             "title": "MySQL中的锁（表锁、行锁，共享锁，排它锁，间隙锁）",
             "shortIntroduction": "锁是计算机协调多个进程或线程并发访问某一资源的机制。在数据库中，除传统的 计算资源（如CPU、RAM、I/O等）的争用以外，数据也是一种供许多用户共享的资源。如何保证数据并发访问的一致性、有效性是所有",
@@ -11,9 +13,11 @@
             "lookCount": 100
         },
         {
+            "id": "1002",
             "author": {
+                "id": "2",
                 "name": "tang",
-                "picture": "/b.jpg"
+                "picture": ""
             },
             "title": "MONGODB中的锁（表锁、行锁，共享锁，排它锁，间隙锁）",
             "shortIntroduction": "锁是计算机协调多个进程或线程并发访问某一资源的机制。在数据库中，除传统的 计算资源（如CPU、RAM、I/O等）的争用以外，数据也是一种供许多用户共享的资源。如何保证数据并发访问的一致性、有效性是所有",
@@ -21,5 +25,5 @@
             "lookCount": 200
         }
     ],
-    "totalCount":"39559"
+    "totalCount":"2"
 }

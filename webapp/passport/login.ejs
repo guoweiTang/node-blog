@@ -9,12 +9,12 @@
 </head>
 <body>
 <div class="container">
-	<%- include('../common/widgets/header') -%>
 	<h1>登录</h1>
 	<form action="/login.html" method="POST">
 		<input type="text" name="user" placeholder="请输入用户名">
 		<input type="password" name="password" placeholder="请输入密码">
 		<input type="submit" value="登录">
+		<p>还没账号，<a href="/register.html">立即注册</a></p>
 	</form>
 </div>
 </body>

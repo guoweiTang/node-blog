@@ -4,7 +4,7 @@
   "description": "a node application",
   "main": "index.js",
   "scripts": {
-    "start": "supervisor server/app.js",
+    "start": "supervisor -i webapp server/app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "ice",
@@ -15,7 +15,8 @@
     "cookie-parser": "^1.4.3",
     "cookie-session": "^2.0.0-beta.1",
     "ejs": "^2.5.6",
-    "express": "^4.15.2"
+    "express": "^4.15.2",
+    "multer": "^1.3.0"
   },
   "repository": {
     "type": "git",
