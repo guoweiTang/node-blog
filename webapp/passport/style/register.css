@@ -4,6 +4,15 @@
  * @authors ice
  * @date    2017-02-08 11:38:12
  */
+nav{
+    width: 800px;
+    margin: 0 auto;
+    padding: 10px 0;
+    border-bottom: 1px solid #999;
+    text-align: left;
+    font-size: 18px;
+    font-weight: bold;
+}
 .container{
 	text-align: center;
 }

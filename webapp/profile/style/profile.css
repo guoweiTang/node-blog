@@ -4,6 +4,21 @@
  * @authors ice
  * @date    2017-02-08 11:38:12
  */
+.publish_btn{
+    display: block;
+    width: 140px;
+    text-align: center;
+    padding: 10px 0;
+    margin: 10px auto;
+    font-size: 16px;
+    color: #fff;
+    background-color: #4343ff;
+    border-radius: 3px;
+}
+.publish_btn:hover{
+    background-color: #00f;
+    color: #fff;
+}
 .blog_list > li {
     box-sizing: border-box;
     width: 585px;

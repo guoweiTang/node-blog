@@ -18,6 +18,12 @@ let upload = multer({
 	dest: 'upload-sources/i'
 });
 
+app.set('trust proxy', 1) // trust first proxy
+app.use(cookieSession({
+  name: 'session',
+  keys: ['key1', 'key2']
+}))
+
 app.set('views', process.cwd() + '/webapp');
 app.set('view engine', 'ejs');
 
@@ -30,16 +36,11 @@ app.use(express.static('upload-sources'));
 
 //注入全局变量：isOnLine、userProfile
 app.use(function(req, res, next){
-	let session = req.cookies.session;
-	let isOnLine = sessionMap.has(session);
-
-	//是否登录标识
-	app.locals.isOnLine = isOnLine;
-
-	//登录用户信息
-	if(isOnLine){
-		app.locals.userProfile = sessionMap.get(session);
+	let user = req.session.user;
+	if(user && !user.picture){
+		user.picture = '/i/default-head.jpg';
 	}
+	app.locals.session = req.session;
 	next();
 })
 
@@ -53,6 +54,7 @@ app.route('/register.html')
 	let body = req.body;
 	findWithFile('user.json', function(jsonData, fullUrl) {
 		let result = jsonData.result;
+
 		//检测该用户名是否已注册
 		for(let user of result){
 			if(user.name === body.user){
@@ -74,7 +76,8 @@ app.route('/register.html')
 		let ws = fs.createWriteStream(fullUrl);
 		ws.end(JSON.stringify(jsonData));
 		ws.on('close', function(){
-			addCookieSession(res, userDetail);
+			req.session.user = userDetail;
+			res.redirect('/index.html');
 		})
 	});
 })
@@ -106,7 +109,8 @@ app.route('/login.html')
 		}
 		//登录成功
 		if(loginSign){
-			addCookieSession(res, userDetail);
+			req.session.user = userDetail;
+			res.redirect('/index.html');
 		}else{
 			res.end('The nickname or password is error, please <a href="javascript:history.go(-1)">input again</a>');
 		}
@@ -115,7 +119,8 @@ app.route('/login.html')
 
 //登出
 app.get('/logout', function(req, res, next) {
-	deleteCookieSession(res);
+	req.session = null
+	res.redirect(req.get('Referer'));
 })
 
 //首页
@@ -135,10 +140,10 @@ app.all(['/', '/index.html'], function(req, res, next){
 });
 
 
-//个人博客
+//个人博客列表
 app.all('/profile.html', function(req, res, next){
 	//已登录
-	if(app.locals.isOnLine){
+	if(req.session.user){
 		findWithFile('articles.json', function(jsonData, fullUrl) {
 			res.render('profile/profile', {
 				result: jsonData.result
@@ -149,18 +154,54 @@ app.all('/profile.html', function(req, res, next){
 	}
 });
 
+app.route('/publish.html')
+.get(function(req, res, next){
+	//已登录
+	if(req.session.user){
+		res.render('article/publish');
+	}else{
+		res.redirect('/login.html');
+	}
+})
+.post(function(req, res, next){
+	//已登录
+	if(req.session.user){
+		let body = req.body;
+		let fullUrl = __dirname + '/data/articles.json';
+		let ws = fs.createWriteStream(fullUrl);
+		let user = req.session.user;
+		let date = new Date();
+		let article = {
+            "id": factoryId(),
+            "author": {
+                "id": user.id,
+                "name": user.name,
+                "picture": user.picture
+            },
+            "title": body.articleTitle,
+            "shortIntroduction": body.articleDesc,
+            "time": date.getFullYear() + '/' + ((date.getMonth() + 1) > 9 ? date.getMonth() + 1 : '0' + (date.getMonth() + 1)) + '/' + (date.getDate() > 9 ? date.getDate() : '0' + date.getDate()),
+            "lookCount": 0
+		}
+		ws.end(JSON.stringify(article));
+		ws.on('close', function(){
+			res.redirect('/profile.html');
+		})
+		
+	}
+});
+
 //设置
 app.route('/settings.html')
 .get(function(req, res, next){
 	//已登录
-	if(app.locals.isOnLine){
+	if(req.session.user){
 		res.render('profile/settings');
 	}else{
 		res.redirect('/login.html');
 	}
 })
 .post(upload.single('headPic'), function(req, res, next){
-	// console.log(req.file)	
 	res.end('ok')
 })
 
@@ -184,20 +225,6 @@ function findWithFile(fileName, callback){
 		jsonFileData.totalCount = jsonFileData.totalCount || 0;
 		typeof callback === 'function' && callback(jsonFileData, fullUrl);
 	})
-}
-
-function addCookieSession(res, user){
-	let sessionValue = factoryId();
-	user.picture = '/i/default-head.jpg';
-
-	sessionMap.set(sessionValue, user);
-	res.cookie('session', sessionValue);
-	res.redirect('/index.html');
-}
-
-function deleteCookieSession(res){
-	res.clearCookie('session');
-	res.redirect('/index.html');
 }
 
 /**

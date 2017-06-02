@@ -11,21 +11,26 @@
 <div class="container">
 	<%- include('../common/widgets/header') -%>
 	<div class="content">
-		<% for(var article of result){ %>
-		<section>
-			<dl class="blog_panel clearfix">
-				<dt>
-					<img src="<%= article.author.picture %>" alt="博主头像" width="96" height="96">
-					<span class="name"><%= article.author.name %></span>
-				</dt>
-				<dd>
-					<h3><%= article.title %></h3>
-					<p><%= article.shortIntroduction %></p>
-					<div class="blog_data">发表时间：<%= article.time %>&nbsp;&nbsp;查看人数：<%= article.lookCount %></div>
-				</dd>
-			</dl>
-		</section>
+		<% if(result.length){ %>
+			<% for(var article of result){ %>
+			<section>
+				<dl class="blog_panel clearfix">
+					<dt>
+						<img src="<%= article.author.picture %>" alt="博主头像" width="96" height="96">
+						<span class="name"><%= article.author.name %></span>
+					</dt>
+					<dd>
+						<h3><%= article.title %></h3>
+						<p><%= article.shortIntroduction %></p>
+						<div class="blog_data">发表时间：<%= article.time %>&nbsp;&nbsp;查看人数：<%= article.lookCount %></div>
+					</dd>
+				</dl>
+			</section>
+			<% } %>
+		<% }else{ %>
+			<p>没一人发表帖子……</p>
 		<% } %>
+
 	</div>
 </div>
 </body>
