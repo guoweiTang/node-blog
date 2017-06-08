@@ -11,9 +11,11 @@ let multer  = require('multer');
 let cookieParser = require('cookie-parser');
 let cookieSession = require('cookie-session');
 let fs = require('fs');
+let passport = require('./passport');
 
 let sessionMap = new Map();
 let app = express();
+//上传头像
 let upload = multer({
 	dest: 'upload-sources/i'
 });
@@ -34,7 +36,7 @@ app.use(bodyParser.urlencoded({extended: false}));
 app.use(express.static('webapp'));
 app.use(express.static('upload-sources'));
 
-//注入全局变量：isOnLine、userProfile
+//注入全局变量
 app.use(function(req, res, next){
 	let user = req.session.user;
 	if(user && !user.picture){
@@ -44,93 +46,17 @@ app.use(function(req, res, next){
 	next();
 })
 
-//注册
-app.route('/register.html')
-.get(function(req, res, next){
-	res.render('passport/register');
-})
-.post(function(req, res, next){
-	res.set('Content-Type', 'text/html');
-	let body = req.body;
-	findWithFile('user.json', function(jsonData, fullUrl) {
-		let result = jsonData.result;
-
-		//检测该用户名是否已注册
-		for(let user of result){
-			if(user.name === body.user){
-				res.end('The nickname has registered, please change other nickname <a href="javascript:history.go(-1)">register again</a> or <a href="/login.html">quick login</a>');
-				return;
-			}
-		}
-
-		let userDetail = {
-			id: factoryId(),
-			name: body.user,
-			password: body.password,
-			picture: '',
-		};
-		//用户列表添加数据
-		result.push(userDetail);
-		jsonData.totalCount ++;
-
-		let ws = fs.createWriteStream(fullUrl);
-		ws.end(JSON.stringify(jsonData));
-		ws.on('close', function(){
-			req.session.user = userDetail;
-			res.redirect('/index.html');
-		})
-	});
-})
-
-//登录
-app.route('/login.html')
-.get(function(req, res, next){
-	//已登录
-	if(app.locals.isOnLine){
-		res.redirect('/index.html');
-	}else{
-		res.render('passport/login');
-	}
-})
-.post(function(req, res, next){
-	res.set('Content-Type', 'text/html');
-	let body = req.body;
-	findWithFile('user.json', function(jsonData, fullUrl) {
-		let userList = jsonData.result;
-		//登录是否成功标识
-		let loginSign = false;
-		let userDetail = null;
-		for(let user of userList){
-			if(user.name === body.user && user.password === body.password){
-				loginSign = true;
-				userDetail = user;
-				break;
-			}
-		}
-		//登录成功
-		if(loginSign){
-			req.session.user = userDetail;
-			res.redirect('/index.html');
-		}else{
-			res.end('The nickname or password is error, please <a href="javascript:history.go(-1)">input again</a>');
-		}
-	})
-})
-
-//登出
-app.get('/logout', function(req, res, next) {
-	req.session = null
-	res.redirect(req.get('Referer'));
-})
+//账号管理
+app.use(passport());
 
 //首页
 app.all(['/', '/index.html'], function(req, res, next){
 	//查询文章列表
 	findWithFile('articles.json', function(jsonData, fullUrl) {
 		let result = jsonData.result;
-		for(let article of result){
-			if(!article.author.picture){
-				article.author.picture = '/i/default-head.jpg';
+		if(jsonData.totalCount > 0){
+			for(let theResult of result){
+				theResult.shortIntroduction = theResult.introduction.substr(0, 160) + '...';
 			}
 		}
 		res.render('index/index', {
@@ -142,13 +68,30 @@ app.all(['/', '/index.html'], function(req, res, next){
 
 //个人博客列表
 app.all('/profile.html', function(req, res, next){
+	let user = req.session.user;
 	//已登录
-	if(req.session.user){
-		findWithFile('articles.json', function(jsonData, fullUrl) {
-			res.render('profile/profile', {
-				result: jsonData.result
-			});
-		});
+	if(user){
+		let privateFileUrl = __dirname + '/data/private-articles/' + user.id + '.json';
+		fs.stat(privateFileUrl, function(err, stat) {
+			if(err){
+				res.render('profile/profile', {
+					result: []
+				});
+			}else{
+				findWithFile('private-articles/' + user.id + '.json', function(jsonData, fullUrl) {
+					let result = jsonData.result;
+					if(jsonData.totalCount > 0){
+						for(let theResult of result){
+							theResult.shortIntroduction = theResult.introduction.substr(0, 60) + '...';
+						}
+					}
+					res.render('profile/profile', {
+						result: result
+					});
+				});
+			}
+		})
+		
 	}else{
 		res.redirect('/login.html');
 	}
@@ -167,25 +110,65 @@ app.route('/publish.html')
 	//已登录
 	if(req.session.user){
 		let body = req.body;
-		let fullUrl = __dirname + '/data/articles.json';
-		let ws = fs.createWriteStream(fullUrl);
 		let user = req.session.user;
+		if(!body.articleTitle || !body.articleDesc){
+			res.send({
+				status: -1,
+				message: '标题和内容都是必填'
+			})
+			return;
+		}
+		let privateFileUrl = __dirname + '/data/private-articles/' + user.id + '.json';
 		let date = new Date();
+		let createTime = date.getFullYear() + '/' + ((date.getMonth() + 1) > 9 ? date.getMonth() + 1 : '0' + (date.getMonth() + 1)) + '/' + (date.getDate() > 9 ? date.getDate() : '0' + date.getDate());
+		let articleId = factoryId();
 		let article = {
-            "id": factoryId(),
-            "author": {
-                "id": user.id,
-                "name": user.name,
-                "picture": user.picture
-            },
+            "id": articleId,
             "title": body.articleTitle,
-            "shortIntroduction": body.articleDesc,
-            "time": date.getFullYear() + '/' + ((date.getMonth() + 1) > 9 ? date.getMonth() + 1 : '0' + (date.getMonth() + 1)) + '/' + (date.getDate() > 9 ? date.getDate() : '0' + date.getDate()),
+            "introduction": body.articleDesc,
+            "time": createTime,
             "lookCount": 0
 		}
-		ws.end(JSON.stringify(article));
-		ws.on('close', function(){
-			res.redirect('/profile.html');
+		//检测文件是否存在
+		fs.stat(privateFileUrl, function(err, stat) {
+			if(err){
+				let ws = fs.createWriteStream(privateFileUrl);
+				let data = {};
+				data.result = [article];
+				data.totalCount = 1;
+				ws.end(JSON.stringify(data));
+				ws.on('close', function(){
+					res.redirect('/profile.html');
+				})
+			}else{
+				findWithFile('private-articles/' + user.id + '.json', function(jsonData, fullUrl) {
+					let ws = fs.createWriteStream(privateFileUrl);
+					jsonData.result.push(article);
+					jsonData.totalCount ++;
+					ws.end(JSON.stringify(jsonData));
+					ws.on('close', function(){
+						res.redirect('/profile.html');
+					})
+				})
+			}
+		})
+		findWithFile('articles.json', function(jsonData, fullUrl) {
+			let ws = fs.createWriteStream(fullUrl);
+			let article = {
+				"author": {
+	                "id": user.id,
+	                "name": user.name,
+	                "picture": user.picture
+				},
+	            "id": articleId,
+	            "title": body.articleTitle,
+	            "introduction": body.articleDesc,
+	            "time": createTime,
+	            "lookCount": 0
+			}
+			jsonData.result.push(article);
+			jsonData.totalCount ++;
+			ws.end(JSON.stringify(jsonData));
 		})
 		
 	}
