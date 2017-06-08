@@ -24,6 +24,8 @@ form{
     top: 0;
     width: 96px;
     height: 96px;
+    border-radius: 50%;
+    border: 1px solid #eee;
 }
 .head_pic [type="file"]{
     position: absolute;

@@ -16,9 +16,30 @@ let passport = require('./passport');
 let sessionMap = new Map();
 let app = express();
 //上传头像
-let upload = multer({
-	dest: 'upload-sources/i'
-});
+let storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'upload-sources/i')
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.fieldname + '-' + Date.now() + '.' + getExtName(file))
+  }
+})
+function getExtName(file){
+	switch(file.mimetype){
+		case 'image/jpeg':
+			return 'jpg';
+			break;
+		case 'image/png':
+			return 'png';
+			break;
+		case 'image/gif':
+			return 'gif';
+			break;
+		default: 
+			return file.originalname.substr(file.originalname.lastIndexOf('.') + 1);
+	}
+}
+let upload = multer({ storage: storage });
 
 app.set('trust proxy', 1) // trust first proxy
 app.use(cookieSession({
@@ -184,10 +205,36 @@ app.route('/settings.html')
 		res.redirect('/login.html');
 	}
 })
-.post(upload.single('headPic'), function(req, res, next){
-	res.end('ok')
-})
 
+app.post('/uploadPicture.json', upload.single('headPic'), function(req, res, next) {
+	let sessionUser = req.session.user;
+	let serverFileName = req.file.path.substr(req.file.path.lastIndexOf('/') + 1);
+	let serverPicturePath = '/i/' + serverFileName;
+	sessionUser.picture = serverPicturePath;
+	findWithFile('user.json', function(jsonData, fullUrl) {
+		let result = jsonData.result;
+
+		//检测该用户名是否已注册
+		for(let user of result){
+			if(user.id === sessionUser.id){
+				user.picture = serverPicturePath;
+				break;
+			}
+		}
+
+		let ws = fs.createWriteStream(fullUrl);
+		ws.end(JSON.stringify(jsonData));
+		ws.on('close', function(){
+			res.send({
+				result: {
+					picture: serverPicturePath
+				},
+				status: 1,
+				message: 'success'
+			})
+		})
+	});
+})
 
 /**
  * [findWithFile 文件中查询json数据]
