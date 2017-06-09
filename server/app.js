@@ -74,15 +74,26 @@ app.use(passport());
 app.all(['/', '/index.html'], function(req, res, next){
 	//查询文章列表
 	findWithFile('articles.json', function(jsonData, fullUrl) {
-		let result = jsonData.result;
+		let articlesResult = jsonData.result;
 		if(jsonData.totalCount > 0){
-			for(let theResult of result){
-				theResult.shortIntroduction = theResult.introduction.substr(0, 160) + '...';
+			for(let theResult of articlesResult){
+				//查询作者基本信息
+				findWithFile('user.json', function(jsonData, fullUrl) {
+					let result = jsonData.result;
+					for(let user of result){
+						if(user.id === theResult.author.id){
+							theResult.author.name = user.name;
+							theResult.author.picture = user.picture || '/i/default-head.jpg';
+							theResult.shortIntroduction = theResult.introduction.substr(0, 160) + '...';
+							break;
+						}
+					}
+				});
 			}
+			res.render('index/index', {
+				result: articlesResult
+			});
 		}
-		res.render('index/index', {
-			result: result
-		});
 	});
 });
 
@@ -177,9 +188,7 @@ app.route('/publish.html')
 			let ws = fs.createWriteStream(fullUrl);
 			let article = {
 				"author": {
-	                "id": user.id,
-	                "name": user.name,
-	                "picture": user.picture
+	                "id": user.id
 				},
 	            "id": articleId,
 	            "title": body.articleTitle,
@@ -243,18 +252,12 @@ app.post('/uploadPicture.json', upload.single('headPic'), function(req, res, nex
  */
 function findWithFile(fileName, callback){
 	let fullUrl = __dirname + '/data/' + fileName;
-	let rs = fs.createReadStream(fullUrl),
-		fileData = '';
-	rs.on('data', function(data) {
-		fileData += data;
-	})
-	rs.on('end', function() {
-		fileData = fileData || '{}';
-		let jsonFileData = JSON.parse(fileData);
-		jsonFileData.result = jsonFileData.result || [];
-		jsonFileData.totalCount = jsonFileData.totalCount || 0;
-		typeof callback === 'function' && callback(jsonFileData, fullUrl);
-	})
+	let fileText = fs.readFileSync(fullUrl, 'utf-8');
+	fileText = fileText || '{}';
+	let jsonFileData = JSON.parse(fileText);
+	jsonFileData.result = jsonFileData.result || [];
+	jsonFileData.totalCount = jsonFileData.totalCount || 0;
+	typeof callback === 'function' && callback(jsonFileData, fullUrl);
 }
 
 /**

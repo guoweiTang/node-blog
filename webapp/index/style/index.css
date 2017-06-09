@@ -20,6 +20,7 @@
 }
 .blog_panel dt img{
     display: block;
+    border: 1px solid #eee;
     width: 96px;
     height: 96px;
     border-radius: 50%;
