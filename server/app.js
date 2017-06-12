@@ -5,15 +5,31 @@
  * @version $Id$
  */
 let express = require('express');
+
+//初始化配置
+let config = require('./config');
+
+//设置命令行输出文字样式（https://github.com/Marak/colors.js）
 let colors = require('colors');
+
+//解析请求体到req.body字段中（https://github.com/expressjs/body-parser）
 let bodyParser = require('body-parser');
+
+//专为form表单上传文件而生（https://github.com/expressjs/multer）
 let multer  = require('multer');
+
+//规范设置及获取cookie方式（https://github.com/expressjs/cookie-parser）
 let cookieParser = require('cookie-parser');
+
+//基于cookie-parser的会话设置（https://github.com/expressjs/cookie-session）
 let cookieSession = require('cookie-session');
+
+//文件处理（node内置）
 let fs = require('fs');
+
+//通行证相关代码（登录，登出，注册）
 let passport = require('./passport');
 
-let sessionMap = new Map();
 let app = express();
 //上传头像
 let storage = multer.diskStorage({
@@ -21,24 +37,9 @@ let storage = multer.diskStorage({
     cb(null, 'upload-sources/i')
   },
   filename: function (req, file, cb) {
-    cb(null, file.fieldname + '-' + Date.now() + '.' + getExtName(file))
+    cb(null, file.fieldname + '-' + Date.now() + file.originalname.substr(file.originalname.lastIndexOf('.')))
   }
 })
-function getExtName(file){
-	switch(file.mimetype){
-		case 'image/jpeg':
-			return 'jpg';
-			break;
-		case 'image/png':
-			return 'png';
-			break;
-		case 'image/gif':
-			return 'gif';
-			break;
-		default: 
-			return file.originalname.substr(file.originalname.lastIndexOf('.') + 1);
-	}
-}
 let upload = multer({ storage: storage });
 
 app.set('trust proxy', 1) // trust first proxy
@@ -61,7 +62,7 @@ app.use(express.static('upload-sources'));
 app.use(function(req, res, next){
 	let user = req.session.user;
 	if(user && !user.picture){
-		user.picture = '/i/default-head.jpg';
+		user.picture = config.defaultPic;
 	}
 	app.locals.session = req.session;
 	next();
@@ -83,7 +84,7 @@ app.all(['/', '/index.html'], function(req, res, next){
 					for(let user of result){
 						if(user.id === theResult.author.id){
 							theResult.author.name = user.name;
-							theResult.author.picture = user.picture || '/i/default-head.jpg';
+							theResult.author.picture = user.picture || config.defaultPic;
 							theResult.shortIntroduction = theResult.introduction.substr(0, 160) + '...';
 							break;
 						}
@@ -216,8 +217,23 @@ app.route('/settings.html')
 })
 
 app.post('/uploadPicture.json', upload.single('headPic'), function(req, res, next) {
+	if(req.file.size > 1024 * 5){
+		res.send({
+			status: -1,
+			message: '上传头像不能超过5MB'
+		})
+		return;
+	}
+	let extName = file.originalname.substr(file.originalname.lastIndexOf('.') + 1);
+	if(!(/^(jpg|png|gif)$/.test(extName))){
+		res.send({
+			status: -1,
+			message: '上传头像只支持扩展名为jpg、png、gif的文件'
+		})
+		return;
+	}
 	let sessionUser = req.session.user;
-	let serverFileName = req.file.path.substr(req.file.path.lastIndexOf('/') + 1);
+	let serverFileName = req.file.filename;
 	let serverPicturePath = '/i/' + serverFileName;
 	sessionUser.picture = serverPicturePath;
 	findWithFile('user.json', function(jsonData, fullUrl) {
