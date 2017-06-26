@@ -1,0 +1,17 @@
+<header class="page_header">
+	<div class="login_register">
+		<% if(typeof session.user !== 'undefined') { %>
+		<a href="/account/profile.html"><%= session.user.name %></a>
+		<a href="/passport/logout">退出</a>
+		<% }else{ %>
+		<a href="/passport/login.html">登录</a>
+		<a href="/passport/register.html">注册</a>
+		<% } %>
+	</div>
+	<nav>
+		<ul class="clearfix">
+			<li><a href="/">首页</a></li>
+			<li><a href="/blog/myblog.html">个人博客</a></li>
+		</ul>
+	</nav>
+</header>

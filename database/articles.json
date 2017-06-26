@@ -1,0 +1,1 @@
+{"result":[{"author":{"id":"4898008"},"id":"2287345","title":"南非遭风暴袭击 大风掀巨浪游人作死冒险拍照留念","introduction":"取当前工作目录（Current Work Directory），这个不同于“脚本所在目录”。如果你是通过命令行调用的，那么就应该是入口脚本的目录；如果是通过其他进程调用的会继承下来。\r\n\r\n可以通过process.chdir来修改。","time":"2017/06/26","lookCount":0}],"totalCount":1}
