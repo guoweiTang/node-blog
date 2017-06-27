@@ -14,7 +14,8 @@
 		<form target="upload-iframe" class="uploadFile" action="/account/uploadPicture.json" method="POST" enctype="multipart/form-data">
 			<label class="head_pic"><img id="portrait_image" src="<%= session.user.picture %>" alt="" width="96" height="96"><input type="file" name="headPic"></label>
 		</form>
-		<form action="/settings.html" method="POST">
+		<form id="profileForm">
+			<input type="hidden" name="headPic" value="<%= session.user.picture %>">
 			<input type="text" name="user" value="<%= session.user.name %>">
 			<input type="submit" value="保存">
 		</form>
@@ -24,15 +25,42 @@
 <script src="/node_modules/jquery/dist/jquery.min.js"></script>
 <script>
 
+	//图片上传
 	$('[name="upload-iframe"]').off('load');
 	$('[name="upload-iframe"]').on('load', function() {
         var res = JSON.parse($(this).contents().find('pre').html());
-        $('#portrait_image').attr('src', res.result.picture);
+        if(res.status === 1){
+	        $('#portrait_image').attr('src', res.result.picture);
+	        $('#profileForm [name="headPic"').val(res.result.picture);
+        }else{
+        	alert(res.message);
+        }
 	});
 	$('[type="file"]')[0].addEventListener('change', function(event) {
-		$('.uploadFile').submit();
+		if(this.files.length){
+			$('.uploadFile').submit();
+		}
 	})
 
+	$('#profileForm').on('submit', function() {
+		let _this = this;
+		$.ajax({
+			url: '/account/profile.html',
+			type: 'POST',
+			data: {
+				headPic: $(_this).find('[name="headPic"]').val(),
+				user: $(_this).find('[name="user"]').val()
+			},
+			success: function(res) {
+				if(res.status === 1) {
+					alert('保存成功');
+				}else{
+					alert(res.message);
+				}
+			}
+		})
+		return false;
+	})
 
 </script>
 </body>
