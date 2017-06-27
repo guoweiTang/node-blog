@@ -37,6 +37,8 @@ router.route('/register.html')
 			req.session.user = userDetail;
 			res.redirect('/');
 		})
+		//新建个人博客文件
+		fs.createWriteStream(process.cwd() + '/database/private-articles/' + userDetail.id + '.json').end('');
 	});
 })
 

@@ -50,3 +50,19 @@ h3 a{
     margin-top: 8px;
     text-align: right;
 }
+
+
+.author{
+    display: table;
+    line-height: 20px;
+    margin-bottom: 20px;
+}
+.author img{
+    border-radius: 50%;
+}
+.author dd, .author dt{
+    float: left;
+}
+.author a + a{
+    margin-left: 10px;
+}

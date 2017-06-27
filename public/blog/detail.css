@@ -1,0 +1,34 @@
+@charset "UTF-8";
+/**
+ * 
+ * @authors ice
+ * @date    2017-02-08 11:38:12
+ */
+h2{
+    font-weight: bold;
+}
+.main_content{
+    margin-top: 30px;
+}
+.hotbar{
+    text-align: right;
+    font-size: 12px;
+}
+.author{
+    display: table;
+    line-height: 20px;
+    color: #666;
+}
+.author img{
+    border-radius: 50%;
+}
+.author dd, .author dt{
+    float: left;
+}
+.author a + a{
+    margin-left: 10px;
+    color: #666;
+}
+.author a:hover{
+    color: #00b38a;
+}

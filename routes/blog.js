@@ -11,6 +11,7 @@ router.all('/myblog.html', function(req, res, next){
 		fs.stat(privateFileUrl, function(err, stat) {
 			if(err){
 				res.render('blog/myblog', {
+					author: null,
 					result: []
 				});
 			}else{
@@ -22,6 +23,7 @@ router.all('/myblog.html', function(req, res, next){
 						}
 					}
 					res.render('blog/myblog', {
+						author: null,
 						result: result
 					});
 				});
@@ -107,5 +109,55 @@ router.route('/publish.html')
 		
 	}
 });
+router.get('/detail/:id', function(req, res) {
+	util.readFileSync('articles.json', function(jsonData, fullUrl) {
+		let articlesList = jsonData.result;
+		if(jsonData.totalCount){
+			//查找文章
+			for(article of articlesList){
+				if(article.id === req.params.id){
+					util.readFileSync('user.json', function(jsonData, fullUrl) {
+						let userList = jsonData.result;
+						//查找作者
+						for(user of userList){
+							if(user.id === article.author.id){
+								article.author = user;
+								res.render('blog/detail', {
+									title: article.title,
+									result: article
+								})
+								break;
+							}
+						}
+					})
+				}
+			}
+			
+		}
+	})
+})
+router.get('/user/:id', function(req, res) {
+	util.readFileSync('private-articles/' + req.params.id + '.json', function(jsonData, fullUrl) {
+		let articlesList = jsonData.result;
+		if(jsonData.totalCount){
+			//查找文章
+			util.readFileSync('user.json', function(jsonData, fullUrl) {
+				let userList = jsonData.result;
+				//查找作者
+				for(user of userList){
+					if(user.id === req.params.id){
+						res.render('blog/myblog', {
+							title: user.name + '的博客',
+							author: user,
+							result: articlesList
+						})
+						break;
+					}
+				}
+			})
+			
+		}
+	})
+})
 
 module.exports = router;
