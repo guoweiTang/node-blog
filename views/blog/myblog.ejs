@@ -17,7 +17,7 @@
 <div class="container">
 	<%- include('../widgets/header') -%>
 	<div class="content">
-		<% if(author){ %>
+		<% if(typeof author !== 'undefined'){ %>
 		<dl class="author">
 			<dt>博主：</dt>
 			<dd><a href="/blog/user/<%= author.id %>"><img src="<%= author.picture %>" alt="博主头像" width="20" height="20"></a><a href="/blog/user/<%= author.id %>"><%= author.name %></a></dd>
@@ -36,7 +36,11 @@
 			<% } %>
 		</ul>
 		<% }else{ %>
-		<div class="no_blog">您还没发表过文章哦！</div>
+			<% if(typeof author !== 'undefined'){ %>
+			<div class="no_blog">博主还没发表过文章哦！</div>
+			<% }else{ %>
+			<div class="no_blog">您还没发表过文章哦！</div>
+			<% } %>
 		<% } %>
 	</div>
 </div>

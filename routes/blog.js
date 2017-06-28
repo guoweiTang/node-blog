@@ -11,7 +11,6 @@ router.all('/myblog.html', function(req, res, next){
 		fs.stat(privateFileUrl, function(err, stat) {
 			if(err){
 				res.render('blog/myblog', {
-					author: null,
 					result: []
 				});
 			}else{
@@ -23,7 +22,6 @@ router.all('/myblog.html', function(req, res, next){
 						}
 					}
 					res.render('blog/myblog', {
-						author: null,
 						result: result
 					});
 				});
@@ -121,15 +119,32 @@ router.get('/detail/:id', function(req, res) {
 						//查找作者
 						for(user of userList){
 							if(user.id === article.author.id){
-								article.author = user;
-								res.render('blog/detail', {
-									title: article.title,
-									result: article
-								})
+								// util.readFileSync('private-articles/' + user.id + '.json', function(jsonData, fullUrl){
+								// 	if(jsonData.totalCount > 0){
+								// 		for(privateArticle of jsonData.result){
+								// 			if(privateArticle.id === article.id){
+								// 				privateArticle.lookCount ++;
+								// 				break;
+								// 			}
+								// 		}
+								// 	}
+								// 	fs.createWriteStream(fullUrl).end(JSON.stringify(jsonData));
+								// })
+								// article.lookCount ++;
+								// let ws = fs.createWriteStream(fullUrl)
+								// ws.end(JSON.stringify(jsonData));
+								// ws.on('close', function() {
+									article.author = user;
+									res.render('blog/detail', {
+										title: article.title,
+										result: article
+									})
+								// })
 								break;
 							}
 						}
 					})
+
 				}
 			}
 			
@@ -140,6 +155,9 @@ router.get('/user/:id', function(req, res) {
 	util.readFileSync('private-articles/' + req.params.id + '.json', function(jsonData, fullUrl) {
 		let articlesList = jsonData.result;
 		if(jsonData.totalCount){
+			for(let article of articlesList){
+				article.shortIntroduction = article.introduction.substr(0, 60) + '...';
+			}
 			//查找文章
 			util.readFileSync('user.json', function(jsonData, fullUrl) {
 				let userList = jsonData.result;

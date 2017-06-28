@@ -14,6 +14,7 @@ let passport = require('./routes/passport');
 let account = require('./routes/account');
 //我的博客，发布，博客详情
 let blog = require('./routes/blog');
+let db = require('./routes/db');
 
 let app = express();
 
@@ -57,6 +58,7 @@ app.use(index);
 app.use('/passport', passport);
 app.use('/account', account);
 app.use('/blog', blog);
+app.use(db);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
