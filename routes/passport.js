@@ -2,6 +2,15 @@ let express = require('express');
 let router = express.Router();
 let fs = require('fs');
 let util = require('./util');
+let mongoose = require('mongoose');
+let db = mongoose.createConnection('localhost', 'myblogs');
+let userSchema = new mongoose.Schema({
+	id: String,
+	name: String,
+	password: String,
+	picture: String
+});
+let userModel = db.model('users', userSchema);
 //注册
 router.route('/register.html')
 .get(function(req, res, next){
@@ -10,36 +19,56 @@ router.route('/register.html')
 .post(function(req, res, next){
 	res.set('Content-Type', 'text/html');
 	let body = req.body;
-	util.readFileSync('user.json', function(jsonData, fullUrl) {
-		let result = jsonData.result;
-
-		//检测该用户名是否已注册
-		for(let user of result){
-			if(user.name === body.user){
-				res.end('The nickname has registered, please change other nickname <a href="javascript:history.go(-1)">register again</a> or <a href="/login.html">quick login</a>');
-				return;
-			}
+	//检测该用户名是否已注册
+	userModel.findOne({
+		name: body.user
+	}, function(err, baseUser){
+		if(err){
+			throw err;
+			return;
 		}
-
-		let userDetail = {
-			id: util.createFactoryId(),
-			name: body.user,
-			password: body.password,
-			picture: '',
-		};
-		//用户列表添加数据
-		result.push(userDetail);
-		jsonData.totalCount ++;
-
-		let ws = fs.createWriteStream(fullUrl);
-		ws.end(JSON.stringify(jsonData));
-		ws.on('close', function(){
-			req.session.user = userDetail;
-			res.redirect('/');
-		})
-		//新建个人博客文件
-		fs.createWriteStream(process.cwd() + '/database/private-articles/' + userDetail.id + '.json').end('');
-	});
+		let message;
+		if(!!baseUser){
+			res.send({
+				status: -1,
+				message: '该用户名已注册'
+			})
+		}else{
+			if(!body.user || !body.password || !body.repassword){
+				message = '表单不能为空';
+			}else{
+				if(body.password !== body.repassword){
+					message = '两次输入密码不一致';
+				}
+			}
+			if(message){
+				console.log(message)
+				res.send({
+					status: -1,
+					message: message
+				})
+			}
+			let userSource = {
+				id: util.createFactoryId(),
+				name: body.user,
+				password: body.password
+			};
+			userModel.create(userSource, function(err, data) {
+				if(err){
+					throw err;
+					return;
+				}
+				req.session.user = userSource;
+				res.send({
+					status: 1,
+					message: 'success',
+					result: {
+						url: '/'
+					}
+				})
+			})
+		}
+	})
 })
 
 //登录
@@ -55,24 +84,19 @@ router.route('/login.html')
 .post(function(req, res, next){
 	res.set('Content-Type', 'text/html');
 	let body = req.body;
-	util.readFileSync('user.json', function(jsonData, fullUrl) {
-		let userList = jsonData.result;
-		//登录是否成功标识
-		let loginSign = false;
-		let userDetail = null;
-		for(let user of userList){
-			if(user.name === body.user && user.password === body.password){
-				loginSign = true;
-				userDetail = user;
-				break;
-			}
+	userModel.findOne({
+		name: body.user,
+		password: body.password
+	}, function(err, data) {
+		if(err){
+			throw err;
+			return;
 		}
-		//登录成功
-		if(loginSign){
-			req.session.user = userDetail;
-			res.redirect('/');
-		}else{
+		if(!data){
 			res.end('The nickname or password is error, please <a href="javascript:history.go(-1)">input again</a>');
+		}else{
+			req.session.user = data;
+			res.redirect('/');
 		}
 	})
 })

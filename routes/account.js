@@ -1,9 +1,17 @@
 let express = require('express');
 let router = express.Router();
-let fs = require('fs');
 let util = require('./util');
 //专为form表单上传文件而生（https://github.com/expressjs/multer）
 let multer  = require('multer');
+let mongoose = require('mongoose');
+let db = mongoose.createConnection('localhost', 'myblogs');
+let userSchema = new mongoose.Schema({
+	id: String,
+	name: String,
+	password: String,
+	picture: String
+});
+let userModel = db.model('users', userSchema);
 
 //上传头像
 let storage = multer.diskStorage({
@@ -45,27 +53,19 @@ router.route('/profile.html')
 .post(function(req, res, next){
 	let sessionUser = req.session.user;
 	sessionUser.picture = req.body.headPic;
-	util.readFileSync('user.json', function(jsonData, fullUrl) {
-		let result = jsonData.result;
 
-		//更新用户信息
-		for(let user of result){
-			if(user.id === sessionUser.id){
-				user.name = req.body.user;
-				user.picture = sessionUser.picture;
-				break;
-			}
-		}
-
-		let ws = fs.createWriteStream(fullUrl);
-		ws.end(JSON.stringify(jsonData));
-		ws.on('close', function(){
-			res.send({
-				status: 1,
-				message: 'success'
-			})
+	userModel.findOneAndUpdate({
+		id: sessionUser.id
+	},{
+		name: req.body.user,
+		picture: sessionUser.picture
+	}, function(err, data) {
+		if(err) throw err;
+		res.send({
+			status: 1,
+			message: 'success'
 		})
-	});
+	})
 })
 
 router.post('/uploadPicture.json', function(req, res, next) {

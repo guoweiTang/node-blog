@@ -4,6 +4,9 @@
  * @authors ice
  * @date    2017-02-08 11:38:12
  */
+.error{
+    color: #f00;
+}
 nav{
     width: 800px;
     margin: 0 auto;

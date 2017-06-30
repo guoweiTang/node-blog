@@ -13,7 +13,7 @@
 		<a href="/">首页</a>
 	</nav>
 	<h1>注册</h1>
-	<form action="/passport/register.html" method="POST">
+	<form>
 		<input type="text" name="user" placeholder="请输入用户名">
 		<input type="password" name="password" placeholder="请输入密码">
 		<input type="password" name="repassword" placeholder="请确认密码">
@@ -21,5 +21,30 @@
 		<p>已有账号，<a href="/passport/login.html">直接登录</a></p>
 	</form>
 </div>
+<script src="/node_modules/jquery/dist/jquery.min.js"></script>
+<script>
+	$('form').on('submit', function() {
+		$.ajax({
+			url: '/passport/register.html',
+			type: 'POST',
+			data: {
+				user: $('[name="user"]').val(),
+				password: $('[name="password"]').val(),
+				repassword: $('[name="repassword"]').val()
+			},
+			success: function(data) {
+				let data = JSON.parse(data);
+				console.log(data);
+				if(data.status === 1){
+					location.href = data.result.url;
+				}else{
+					$('.error').remove();
+					$('[type="submit"]').before('<p class="error">' + data.message + '</p>')
+				}
+			}
+		})
+		event.preventDefault();
+	})
+</script>
 </body>
 </html>
