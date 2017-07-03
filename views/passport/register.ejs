@@ -32,9 +32,8 @@
 				password: $('[name="password"]').val(),
 				repassword: $('[name="repassword"]').val()
 			},
+			dataType: 'json',
 			success: function(data) {
-				let data = JSON.parse(data);
-				console.log(data);
 				if(data.status === 1){
 					location.href = data.result.url;
 				}else{

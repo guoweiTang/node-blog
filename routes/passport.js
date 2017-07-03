@@ -19,6 +19,23 @@ router.route('/register.html')
 .post(function(req, res, next){
 	res.set('Content-Type', 'text/html');
 	let body = req.body;
+	let message;
+
+	if(!body.user || !body.password || !body.repassword){
+		message = '表单不能为空';
+	}else{
+		if(body.password !== body.repassword){
+			message = '两次输入密码不一致';
+		}
+	}
+	if(message){
+
+		res.send({
+			status: -1,
+			message: message
+		})
+		return;
+	}
 	//检测该用户名是否已注册
 	userModel.findOne({
 		name: body.user
@@ -27,27 +44,13 @@ router.route('/register.html')
 			throw err;
 			return;
 		}
-		let message;
+		console.log(baseUser);
 		if(!!baseUser){
 			res.send({
 				status: -1,
 				message: '该用户名已注册'
 			})
 		}else{
-			if(!body.user || !body.password || !body.repassword){
-				message = '表单不能为空';
-			}else{
-				if(body.password !== body.repassword){
-					message = '两次输入密码不一致';
-				}
-			}
-			if(message){
-				console.log(message)
-				res.send({
-					status: -1,
-					message: message
-				})
-			}
 			let userSource = {
 				id: util.createFactoryId(),
 				name: body.user,
@@ -84,19 +87,35 @@ router.route('/login.html')
 .post(function(req, res, next){
 	res.set('Content-Type', 'text/html');
 	let body = req.body;
+	let message;
+
+	if(!body.user || !body.password){
+		res.send({
+			status: -1,
+			message: '表单不能为空'
+		})
+	}
 	userModel.findOne({
 		name: body.user,
 		password: body.password
 	}, function(err, data) {
 		if(err){
 			throw err;
-			return;
 		}
 		if(!data){
-			res.end('The nickname or password is error, please <a href="javascript:history.go(-1)">input again</a>');
+			res.send({
+				status: -1,
+				message: '帐号或密码错误'
+			})
 		}else{
 			req.session.user = data;
-			res.redirect('/');
+			res.send({
+				status: 1,
+				message: 'success',
+				result: {
+					url: '/'
+				}
+			})
 		}
 	})
 })
