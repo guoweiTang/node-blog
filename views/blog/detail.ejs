@@ -16,8 +16,8 @@
 			<dt>博主：</dt>
 			<dd><a href="/blog/user/<%= result.author.id %>"><img src="<%= result.author.picture %>" alt="博主头像" width="20" height="20"></a><a href="/blog/user/<%= result.author.id %>"><%= result.author.name %></a></dd>
 		</dl>
-		<div class="hotbar">阅读人数：<%= result.lookCount %>&nbsp;&nbsp;发布日期：<%= result.time %></div>
-		<p class="main_content"><%= result.introduction %></p>
+		<div class="hotbar">阅读人数：<%= result.lookCount %>&nbsp;&nbsp;发布日期：<%= result.createTimeDate %></div>
+		<pre class="main_content"><%= result.introduction %></pre>
 		
 	</div>
 </div>

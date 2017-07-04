@@ -40,7 +40,8 @@ router.all(['/myblog.html', '/user/:id'], function(req, res, next){
 			}
 		}, function(err, data) {
 			if(data.length){
-				for(article of data) {
+				for(let article of data) {
+					article.createTimeDate = [article.createTime.getFullYear(), article.createTime.getMonth() + 1, article.createTime.getDate()].join('/');
 					article.shortIntroduction = article.introduction.substr(0, 60) + '...';
 				}
 			}
@@ -60,7 +61,7 @@ router.all(['/myblog.html', '/user/:id'], function(req, res, next){
 						author: {
 							id: userData.id,
 							name: userData.name,
-							picture: userData.picture || util.config.defaultPic
+							picture: userData.picture
 						}
 					});
 				})
@@ -104,7 +105,13 @@ router.route('/publish.html')
 			lookCount: 0
 		}, function(err, data) {
 			if(err) throw err;
-			res.redirect('/blog/myblog.html');
+			res.send({
+				result: {
+					url: '/blog/myblog.html'
+				},
+				status: 1,
+				message: 'success'
+			})
 		})
 	}else{
 		res.send({
@@ -118,14 +125,13 @@ router.get('/detail/:id', function(req, res) {
 		id: req.params.id
 	}, function(err, article) {
 		if(err) throw err;
+		article.createTimeDate = [article.createTime.getFullYear(), article.createTime.getMonth() + 1, article.createTime.getDate()].join('/');
 		userModel.findOne({
 			id: article.author.id
 		}, function(err, user) {
 			if(err) throw err;
-			article.author = {
-				name: user.name,
-				picture: user.picture || util.config.defaultPic,
-			}
+			article.author.name = user.name,
+			article.author.picture = user.picture,
 			res.render('blog/detail', {
 				result: article
 			})

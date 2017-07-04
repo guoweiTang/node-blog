@@ -54,7 +54,8 @@ router.route('/register.html')
 			let userSource = {
 				id: util.createFactoryId(),
 				name: body.user,
-				password: body.password
+				password: body.password,
+				picture: util.config.defaultPic
 			};
 			userModel.create(userSource, function(err, data) {
 				if(err){

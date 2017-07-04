@@ -10,11 +10,34 @@
 <body>
 <div class="container">
 	<%- include('../widgets/header') -%>
-	<form action="/blog/publish.html" method="POST">
+	<form>
 		<input type="text" name="articleTitle" placeholder="文章标题">
 		<textarea placeholder="文章内容" name="articleDesc" id="" cols="63" rows="10"></textarea>
 		<input type="submit" value="立即发布">
 	</form>
 </div>
+<script src="/node_modules/jquery/dist/jquery.min.js"></script>
+<script>
+	$('form').on('submit', function() {
+		$.ajax({
+			url: '/blog/publish.html',
+			type: 'POST',
+			data: {
+				articleTitle: $('[name="articleTitle"]').val(),
+				articleDesc: $('[name="articleDesc"]').val()
+			},
+			dataType: 'json',
+			success: function(data) {
+				if(data.status === 1){
+					location.href = data.result.url;
+				}else{
+					$('.error').remove();
+					$('[type="submit"]').before('<p class="error">' + data.message + '</p>')
+				}
+			}
+		})
+		event.preventDefault();
+	})
+</script>
 </body>
 </html>

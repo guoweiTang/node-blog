@@ -47,17 +47,18 @@ router.route('/profile.html')
 	if(req.session.user){
 		res.render('account/profile');
 	}else{
-		res.redirect('/login.html');
+		res.redirect('/passport/login.html');
 	}
 })
 .post(function(req, res, next){
 	let sessionUser = req.session.user;
 	sessionUser.picture = req.body.headPic;
+	sessionUser.name = req.body.user;
 
 	userModel.findOneAndUpdate({
 		id: sessionUser.id
 	},{
-		name: req.body.user,
+		name: sessionUser.name,
 		picture: sessionUser.picture
 	}, function(err, data) {
 		if(err) throw err;

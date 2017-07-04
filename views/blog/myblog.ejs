@@ -31,7 +31,7 @@
 			<li>
 				<h3><a href="/blog/detail/<%= article.id %>"><%= article.title %></a></h3>
 				<p><%= article.shortIntroduction %></p>
-				<div class="blog_data">发表时间：<%= article.time %>&nbsp;&nbsp;查看人数：<%= article.lookCount %></div>
+				<div class="blog_data">发表时间：<%= article.createTimeDate %>&nbsp;&nbsp;查看人数：<%= article.lookCount %></div>
 			</li>
 			<% } %>
 		</ul>
