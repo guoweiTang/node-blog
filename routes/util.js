@@ -1,5 +1,3 @@
-//文件处理（node内置）
-let fs = require('fs');
 function Util(){
 	this.config = {
 		defaultPic: '/upload-sources/i/default-head.jpg'
